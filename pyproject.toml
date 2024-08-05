@@ -13,7 +13,10 @@ readme = "README.md"
 license = {text = "MIT"}
 
 [tool.pdm]
-distribution = false
+distribution = true
 
 [tool.pdm.scripts]
-kube-enum = {call = "src.kube_enum.cli:main"}
+kube-enum = "python -m kube_enum.cli"
+
+[project.scripts]
+kube-enum = "kube_enum.cli:main"
