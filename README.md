@@ -6,15 +6,8 @@ This project is a CLI tool designed to enumerate and analyze Kubernetes cluster 
 
 ## Installation
 
-### Prerequisites
-
-- Python 3.12+
-- [PDM](https://pdm-project.org/en/latest/)
-
-Install dependencies
-
-```sh
-pdm install
+```
+pip install -U git+https://github.com/uwuzone/kube-enum.git
 ```
 
 ## Usage
