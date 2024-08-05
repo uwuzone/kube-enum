@@ -1,18 +1,41 @@
 import argparse
+import signal
 import sys
-from .dump_config import dump_cluster_config
+
+from contextlib import contextmanager
+
 from .analyze import (
     show_secrets_and_env_vars,
     log_none_values,
     show_verbose_structure,
     check_unused_resources,
 )
+from .dump_config import dump_cluster_config
+
+
+class TimeoutError(Exception):
+    pass
+
+
+@contextmanager
+def fail_on_timeout(seconds):
+    def signal_handler(signum, frame):
+        raise TimeoutError("Timed out!")
+
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, signal.SIG_DFL)
 
 
 def main():
     parser = argparse.ArgumentParser(
         description="Kubernetes Configuration Enumeration and Analysis Tool"
     )
+    parser.add_argument("--timeout", type=int, help="Timeout in seconds", default=60)
     subparsers = parser.add_subparsers(dest="command", help="Subcommands")
 
     # Dump subcommand
@@ -80,7 +103,13 @@ def main():
     args = parser.parse_args()
 
     if args.command == "dump":
-        config_json = dump_cluster_config(args.url)
+        try:
+            with fail_on_timeout(args.timeout):
+                config_json = dump_cluster_config(args.url)
+        except TimeoutError:
+            print("Timeout occurred while fetching cluster configuration")
+            sys.exit(1)
+
         if args.output:
             with open(args.output, "w") as f:
                 f.write(config_json)
